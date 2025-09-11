@@ -1,22 +1,19 @@
 # ygra — Árvores Múltiplas com UI (PySide6 + Qt Quick)
 
-> Projeto acadêmico com foco em **beleza visual**, **animações fluídas** e **organização profissional**.  
 > Linguagem: **Python 3.12.3** (compatível). GUI: **PySide6 + Qt Quick/QML**.
 
 ## Objetivo
 - Implementar uma **árvore múltipla** (cada nó pode ter 0..N filhos).
-- Visualizar e manipular a árvore em **interface gráfica moderna** (zoom/pan/tema).
-- **Salvar/Abrir** a árvore em JSON validado.
-- (**Fase posterior**) Animações de busca (BFS/DFS) e expansão/colapso.
+- Visualizar e manipular a árvore em **interface gráfica** (zoom/pan/tema).
 
 ## Stack
 - **Runtime**: PySide6 (Qt 6) + Qt Quick Controls 2 (tema Material/Universal)
 - **Qualidade**: pytest, black, ruff, mypy, pre-commit
-- **Empacote**: pyinstaller (opcional, fase posterior)
+- **Empacote**: pyinstaller (fase posterior)
 
 ## Como rodar (Linux/macOS)
 ```bash
-# Requer Python 3.12.x instalado (o professor usa 3.12.3)
+# Requer Python 3.12.x instalado
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -64,3 +61,13 @@ ygra/
 
 ## Licença
 MIT © 2025
+
+## Como executar a janela QML (bootstrap)
+Depois de instalar as dependências e ativar o venv:
+```bash
+python -m ygra
+```
+Você verá:
+- Janela principal com barra de ferramentas
+- Painel lateral (placeholders)
+- Canvas com **zoom/pan** e **nós mock**
