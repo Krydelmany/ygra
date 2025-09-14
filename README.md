@@ -132,13 +132,6 @@ btree-visualizer/
 - **QML**: Linguagem para desenhar a interface
 - **Pytest**: Para executar os testes
 
-## Para Desenvolvedores
-
-### Executar os testes
-```bash
-python -m pytest tests/ -v
-```
-
 ### Arquivos importantes
 - `src/core/btree.py`: Contém toda a lógica da árvore B
 - `src/ui/main.qml`: Interface principal do programa
@@ -149,7 +142,3 @@ python -m pytest tests/ -v
 2. A interface chama funções no `bridge.py`
 3. O bridge chama as operações da árvore B no `btree.py`
 4. A árvore é atualizada e redesenhada na tela
-
----
-
-**Projeto desenvolvido para fins educacionais - demonstração de estruturas de dados**
