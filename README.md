@@ -1,6 +1,6 @@
 # Arvores Multiplas
  
- Arvore B com interface.
+ Arvore B com interface
 
 ## Instalação
 
