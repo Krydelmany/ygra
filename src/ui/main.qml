@@ -8,7 +8,7 @@ ApplicationWindow {
     visible: true
     width: 1600
     height: 1000
-    title: "B-Tree Visualizer"
+    title: "Trabalho"
     color: "#0a0a0a"
 
     property real animationSpeed: 500
@@ -72,12 +72,6 @@ ApplicationWindow {
                         font.pixelSize: 24
                         font.weight: Font.Bold
                         color: "#ffffff"
-                    }
-                    
-                    Text {
-                        text: "Explorador Interativo de Árvore Binária"
-                        font.pixelSize: 14
-                        color: "#71717a"
                     }
                 }
 

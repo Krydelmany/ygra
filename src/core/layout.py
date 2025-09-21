@@ -1,135 +1,110 @@
-"""
-Layout calculation for B-tree visualization.
-"""
 from typing import List, Dict, Any, Tuple
 from .btree import BTree, BNode
 
 
-def layout(tree: BTree) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """
-    Calculate layout positions for all nodes and edges.
-
-    Returns:
-        (nodes, edges) where:
-        - nodes: [{"id": str, "keys": List[int], "x": float, "y": float, "isLeaf": bool}]
-        - edges: [{"fromId": str, "toId": str}]
-    """
-    if not tree.root:
+def layout(arvore: BTree) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    if not arvore.root:
         return [], []
 
-    nodes = []
-    edges = []
+    nos = []
+    arestas = []
 
-    # Calculate positions using level-order traversal with width calculation
-    levels = _build_level_data(tree.root)
-    _assign_positions(levels, nodes, edges)
+    niveis = _build_level_data(arvore.root)
+    _assign_positions(niveis, nos, arestas)
 
-    return nodes, edges
-
-
-def _build_level_data(root: BNode) -> List[List[BNode]]:
-    """Build level-by-level data for the tree."""
-    levels = []
-    queue = [root]
-
-    while queue:
-        level_size = len(queue)
-        current_level = []
-
-        for _ in range(level_size):
-            node = queue.pop(0)
-            current_level.append(node)
-
-            # Add children to queue
-            for child in node.children:
-                queue.append(child)
-
-        levels.append(current_level)
-
-    return levels
+    return nos, arestas
 
 
-def _assign_positions(levels: List[List[BNode]], 
-                     nodes: List[Dict[str, Any]], 
-                     edges: List[Dict[str, Any]]):
-    """Assign x,y positions to nodes and create edge list."""
-    LEVEL_HEIGHT = 120  # Vertical spacing between levels
-    MIN_NODE_SPACING = 150  # Minimum horizontal spacing between nodes
+def _build_level_data(raiz: BNode) -> List[List[BNode]]:
+    niveis = []
+    fila = [raiz]
 
-    # Calculate subtree widths (number of leaves under each node)
-    subtree_widths = _calculate_subtree_widths(levels)
+    while fila:
+        tamanho_nivel = len(fila)
+        nivel_atual = []
 
-    for level_idx, level in enumerate(levels):
-        y = level_idx * LEVEL_HEIGHT + 50  # Start at y=50
+        for _ in range(tamanho_nivel):
+            no = fila.pop(0)
+            nivel_atual.append(no)
 
-        # Calculate total width needed for this level
-        total_width = 0
-        for node in level:
-            width = max(subtree_widths[node.id] * MIN_NODE_SPACING, MIN_NODE_SPACING)
-            total_width += width
+            for filho in no.children:
+                fila.append(filho)
 
-        # Center the level
-        start_x = -total_width / 2
-        current_x = start_x
+        niveis.append(nivel_atual)
 
-        for node in level:
-            node_width = max(subtree_widths[node.id] * MIN_NODE_SPACING, MIN_NODE_SPACING)
-            x = current_x + node_width / 2
+    return niveis
 
-            # Add node to result
-            nodes.append({
-                "id": node.id,
-                "keys": node.keys.copy(),
+
+def _assign_positions(niveis: List[List[BNode]], 
+                     nos: List[Dict[str, Any]], 
+                     arestas: List[Dict[str, Any]]):
+    ALTURA_NIVEL = 120
+    ESPACAMENTO_MIN_NO = 150 
+
+    larguras_subarvores = _calculate_subtree_widths(niveis)
+
+    for indice_nivel, nivel in enumerate(niveis):
+        y = indice_nivel * ALTURA_NIVEL + 50 
+
+        largura_total = 0
+        for no in nivel:
+            largura = max(larguras_subarvores[no.id] * ESPACAMENTO_MIN_NO, ESPACAMENTO_MIN_NO)
+            largura_total += largura
+
+        inicio_x = -largura_total / 2
+        x_atual = inicio_x
+
+        for no in nivel:
+            largura_no = max(larguras_subarvores[no.id] * ESPACAMENTO_MIN_NO, ESPACAMENTO_MIN_NO)
+            x = x_atual + largura_no / 2
+
+            nos.append({
+                "id": no.id,
+                "keys": no.keys.copy(),
                 "x": x,
                 "y": y,
-                "isLeaf": node.leaf
+                "isLeaf": no.leaf
             })
 
-            current_x += node_width
+            x_atual += largura_no
 
-    # Create edges
-    _create_edges(levels, edges)
+    _create_edges(niveis, arestas)
 
 
-def _calculate_subtree_widths(levels: List[List[BNode]]) -> Dict[str, int]:
-    """Calculate the width (number of leaves) under each node."""
-    widths = {}
+def _calculate_subtree_widths(niveis: List[List[BNode]]) -> Dict[str, int]:
+    larguras = {}
 
-    # Process levels bottom-up
-    for level in reversed(levels):
-        for node in level:
-            if node.leaf:
-                widths[node.id] = 1
+    for nivel in reversed(niveis):
+        for no in nivel:
+            if no.leaf:
+                larguras[no.id] = 1
             else:
-                # Sum of children widths
-                total_width = sum(widths[child.id] for child in node.children)
-                widths[node.id] = max(total_width, 1)
+                largura_total = sum(larguras[filho.id] for filho in no.children)
+                larguras[no.id] = max(largura_total, 1)
 
-    return widths
+    return larguras
 
 
-def _create_edges(levels: List[List[BNode]], edges: List[Dict[str, Any]]):
-    """Create parent-child edges."""
-    for level in levels:
-        for node in level:
-            for child in node.children:
-                edges.append({
-                    "fromId": node.id,
-                    "toId": child.id
+def _create_edges(niveis: List[List[BNode]], arestas: List[Dict[str, Any]]):
+    for nivel in niveis:
+        for no in nivel:
+            for filho in no.children:
+                arestas.append({
+                    "fromId": no.id,
+                    "toId": filho.id
                 })
 
 
-def get_node_bounds(nodes: List[Dict[str, Any]]) -> Dict[str, float]:
-    """Get bounding box of all nodes."""
-    if not nodes:
+def get_node_bounds(nos: List[Dict[str, Any]]) -> Dict[str, float]:
+    if not nos:
         return {"minX": 0, "maxX": 0, "minY": 0, "maxY": 0}
 
-    xs = [node["x"] for node in nodes]
-    ys = [node["y"] for node in nodes]
+    coordenadas_x = [no["x"] for no in nos]
+    coordenadas_y = [no["y"] for no in nos]
 
     return {
-        "minX": min(xs) - 100,
-        "maxX": max(xs) + 100,
-        "minY": min(ys) - 50,
-        "maxY": max(ys) + 100
+        "minX": min(coordenadas_x) - 100,
+        "maxX": max(coordenadas_x) + 100,
+        "minY": min(coordenadas_y) - 50,
+        "maxY": max(coordenadas_y) + 100
     }

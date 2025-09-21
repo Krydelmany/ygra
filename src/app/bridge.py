@@ -1,6 +1,3 @@
-"""
-Bridge between B-tree core and QML UI.
-"""
 from PySide6.QtCore import QObject, Signal, Slot, Property
 from PySide6.QtQml import qmlRegisterType
 from typing import List, Dict, Any
@@ -10,78 +7,69 @@ from core.layout import layout
 
 
 class Bridge(QObject):
-    """Qt Bridge for B-tree visualization."""
 
-    # Signals
-    treeChanged = Signal(list, list)  # nodes, edges
-    metricsChanged = Signal('QVariant')  # metrics dict
-    eventsReady = Signal(list)  # animation events
-    message = Signal(str, str)  # text, kind ("info", "error", "success")
-    degreeChanged = Signal()  # signal for degree property
+    treeChanged = Signal(list, list)
+    metricsChanged = Signal(dict)
+    eventsReady = Signal(list)
+    message = Signal(str, str)
+    degreeChanged = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._degree = 3  # Iniciar com grau 3 
-        max_keys = self._degree - 1  # grau 3 = max 2 chaves
-        self._tree = BTree(max_keys=max_keys)
+        self._grau = 3
+        chaves_maximas = self._grau - 1
+        self._arvore = BTree(max_keys=chaves_maximas)
         self._emit_tree_update()
 
     @Property(int, notify=degreeChanged)
     def degree(self):
-        return self._degree
+        return self._grau
 
     @degree.setter
-    def degree(self, value):
-        if value != self._degree and value >= 2:
-            self._degree = value
-            # Grau na UI = máximo de chaves por nó + 1
-            # grau 3 na UI = máximo 2 chaves por nó
-            # grau 4 na UI = máximo 3 chaves por nó, etc.
-            max_keys = value - 1
-            self._tree = BTree(max_keys=max_keys)
+    def degree(self, valor):
+        if valor != self._grau and valor >= 2:
+            self._grau = valor
+            chaves_maximas = valor - 1
+            self._arvore = BTree(max_keys=chaves_maximas)
             self._emit_tree_update()
-            self.degreeChanged.emit()  # emit the signal when degree changes
-            self.message.emit(f"Grau {value} → máx {max_keys} chaves por nó. Árvore reiniciada.", "info")
+            self.degreeChanged.emit()
+            self.message.emit(f"Grau {valor} → máx {chaves_maximas} chaves por nó. Arvore reiniciada.", "info")
 
     @Slot(str)
-    def insertKeys(self, text: str):
-        """Insert keys from comma-separated string."""
-        if not text.strip():
+    def insertKeys(self, texto: str):
+        if not texto.strip():
             self.message.emit("Digite as chaves para inserir", "error")
             return
 
         try:
-            # Parse keys
-            keys_str = text.replace(" ", "").split(",")
-            keys = []
-            for key_str in keys_str:
-                if key_str.strip():
-                    keys.append(int(key_str.strip()))
+            chaves_str = texto.replace(" ", "").split(",")
+            chaves = []
+            for chave_str in chaves_str:
+                if chave_str.strip():
+                    chaves.append(int(chave_str.strip()))
 
-            if not keys:
-                self.message.emit("Nenhuma chave válida encontrada", "error")
+            if not chaves:
+                self.message.emit("Nenhuma chave valida encontrada", "error")
                 return
 
-            # Insert keys and collect events
-            all_events = []
-            inserted_count = 0
+            todos_eventos = []
+            contador_inseridas = 0
 
-            for key in keys:
-                events = self._tree.insert(key)
+            for chave in chaves:
+                eventos = self._arvore.insert(chave)
                 
-                if events and events[0].get("type") != "error":
-                    all_events.extend(events)
-                    inserted_count += 1
+                if eventos and eventos[0].get("type") != "error":
+                    todos_eventos.extend(eventos)
+                    contador_inseridas += 1
                 else:
-                    # Handle error
-                    error_msg = events[0].get("message", f"Erro ao inserir {key}")
-                    self.message.emit(error_msg, "error")
+                    mensagem_erro = eventos[0].get("message", f"Erro ao inserir {chave}")
+                    self.message.emit(mensagem_erro, "error")
 
-            if inserted_count > 0:
+            if contador_inseridas > 0:
                 self._emit_tree_update()
-                if all_events:
-                    self.eventsReady.emit(all_events)
-                self.message.emit(f"{inserted_count} chave(s) inserida(s)", "success")
+                if todos_eventos:
+                    self.eventsReady.emit(todos_eventos)
+                self.message.emit(f"{contador_inseridas} chave(s) inserida(s)", "success")
 
         except ValueError:
             self.message.emit("Formato inválido. Use números separados por vírgula", "error")
@@ -89,44 +77,40 @@ class Bridge(QObject):
             self.message.emit(f"Erro: {str(e)}", "error")
 
     @Slot(str)
-    def deleteKeys(self, text: str):
-        """Delete keys from comma-separated string."""
-        if not text.strip():
+    def deleteKeys(self, texto: str):
+        if not texto.strip():
             self.message.emit("Digite as chaves para remover", "error")
             return
 
         try:
-            # Parse keys
-            keys_str = text.replace(" ", "").split(",")
-            keys = []
-            for key_str in keys_str:
-                if key_str.strip():
-                    keys.append(int(key_str.strip()))
+            chaves_str = texto.replace(" ", "").split(",")
+            chaves = []
+            for chave_str in chaves_str:
+                if chave_str.strip():
+                    chaves.append(int(chave_str.strip()))
 
-            if not keys:
+            if not chaves:
                 self.message.emit("Nenhuma chave válida encontrada", "error")
                 return
 
-            # Delete keys and collect events
-            all_events = []
-            deleted_count = 0
+            todos_eventos = []
+            contador_removidas = 0
 
-            for key in keys:
-                events = self._tree.delete(key)
+            for chave in chaves:
+                eventos = self._arvore.delete(chave)
                 
-                if events and events[0].get("type") != "error":
-                    all_events.extend(events)
-                    deleted_count += 1
+                if eventos and eventos[0].get("type") != "error":
+                    todos_eventos.extend(eventos)
+                    contador_removidas += 1
                 else:
-                    # Handle error
-                    error_msg = events[0].get("message", f"Chave {key} não encontrada")
-                    self.message.emit(error_msg, "error")
+                    mensagem_erro = eventos[0].get("message", f"Chave {chave} não encontrada")
+                    self.message.emit(mensagem_erro, "error")
 
-            if deleted_count > 0:
+            if contador_removidas > 0:
                 self._emit_tree_update()
-                if all_events:
-                    self.eventsReady.emit(all_events)
-                self.message.emit(f"{deleted_count} chave(s) removida(s)", "success")
+                if todos_eventos:
+                    self.eventsReady.emit(todos_eventos)
+                self.message.emit(f"{contador_removidas} chave(s) removida(s)", "success")
 
         except ValueError:
             self.message.emit("Formato inválido. Use números separados por vírgula", "error")
@@ -134,49 +118,46 @@ class Bridge(QObject):
             self.message.emit(f"Erro: {str(e)}", "error")
 
     @Slot(int)
-    def deleteKey(self, key: int):
-        """Delete a single key."""
+    def deleteKey(self, chave: int):
         try:
-            events = self._tree.delete(key)
+            eventos = self._arvore.delete(chave)
 
-            if events and events[0].get("type") == "error":
-                error_msg = events[0].get("message", f"Erro ao remover {key}")
-                self.message.emit(error_msg, "error")
+            if eventos and eventos[0].get("type") == "error":
+                mensagem_erro = eventos[0].get("message", f"Erro ao remover {chave}")
+                self.message.emit(mensagem_erro, "error")
             else:
                 self._emit_tree_update()
-                if events:
-                    self.eventsReady.emit(events)
-                self.message.emit(f"Chave {key} removida", "success")
+                if eventos:
+                    self.eventsReady.emit(eventos)
+                self.message.emit(f"Chave {chave} removida", "success")
 
         except Exception as e:
             self.message.emit(f"Erro ao remover: {str(e)}", "error")
 
     @Slot(int)
-    def searchKey(self, key: int):
-        """Search for a key and emit animation events."""
+    def searchKey(self, chave: int):
         try:
-            found, events, path = self._tree.search(key)
+            encontrou, eventos, caminho = self._arvore.search(chave)
 
-            if found:
-                self.message.emit(f"Chave {key} encontrada", "success")
+            if encontrou:
+                self.message.emit(f"Chave {chave} encontrada", "success")
             else:
-                self.message.emit(f"Chave {key} não encontrada", "info")
+                self.message.emit(f"Chave {chave} não encontrada", "info")
 
-            if events:
-                self.eventsReady.emit(events)
+            if eventos:
+                self.eventsReady.emit(eventos)
 
         except Exception as e:
             self.message.emit(f"Erro na busca: {str(e)}", "error")
 
     @Slot()
     def clearAll(self):
-        """Clear the entire tree."""
         try:
-            events = self._tree.clear()
+            eventos = self._arvore.clear()
             self._emit_tree_update()
 
-            if events:
-                self.eventsReady.emit(events)
+            if eventos:
+                self.eventsReady.emit(eventos)
 
             self.message.emit("Árvore limpa", "info")
 
@@ -185,34 +166,30 @@ class Bridge(QObject):
 
     @Slot(int)
     def setDegree(self, t: int):
-        """Set the minimum degree of the tree."""
         if t < 2:
             self.message.emit("Grau mínimo deve ser pelo menos 2", "error")
             return
 
-        if t != self._degree:
+        if t != self._grau:
             self.degree = t
 
     @Slot()
     def loadExample(self):
-        """Load example data into the tree."""
         try:
-            # Clear first
-            self._tree.clear()
+            self._arvore.clear()
 
-            # Insert example keys
-            example_keys = [10, 20, 5, 6, 12, 30, 7, 17]
-            all_events = []
+            chaves_exemplo = [10, 20, 5, 6, 12, 30, 7, 17]
+            todos_eventos = []
 
-            for key in example_keys:
-                events = self._tree.insert(key)
-                if events and events[0].get("type") != "error":
-                    all_events.extend(events)
+            for chave in chaves_exemplo:
+                eventos = self._arvore.insert(chave)
+                if eventos and eventos[0].get("type") != "error":
+                    todos_eventos.extend(eventos)
 
             self._emit_tree_update()
 
-            if all_events:
-                self.eventsReady.emit(all_events)
+            if todos_eventos:
+                self.eventsReady.emit(todos_eventos)
 
             self.message.emit("Exemplo carregado", "success")
 
@@ -220,24 +197,20 @@ class Bridge(QObject):
             self.message.emit(f"Erro ao carregar exemplo: {str(e)}", "error")
 
     @Slot(str, result=bool)
-    def validateClearText(self, text: str) -> bool:
-        """Validate clear confirmation text."""
-        return text.upper() == "CLEAR"
+    def validateClearText(self, texto: str) -> bool:
+        return texto.upper() == "CLEAR"
 
     def _emit_tree_update(self):
-        """Emit tree structure and metrics updates."""
         try:
-            nodes, edges = layout(self._tree)
-            metrics = self._tree.metrics()
+            nos, arestas = layout(self._arvore)
+            metricas = self._arvore.metrics()
 
-            self.treeChanged.emit(nodes, edges)
-            self.metricsChanged.emit(metrics)
+            self.treeChanged.emit(nos, arestas)
+            self.metricsChanged.emit(metricas)
 
         except Exception as e:
             self.message.emit(f"Erro na atualização: {str(e)}", "error")
 
 
-# Register the type for QML
 def register_bridge():
-    """Register Bridge type with QML."""
     qmlRegisterType(Bridge, "BTreeApp", 1, 0, "Bridge")
